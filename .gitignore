@@ -1,0 +1,56 @@
+# Python 가상환경 및 환경 설정 디렉터리
+ai_env/
+venv/
+.venv/
+frontend/.venv/
+python/
+
+# Python 컴파일/캐시 파일
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# 보안 및 환경 변수 설정 파일 (민감 정보 포함)
+.env
+backend/.env
+api.txt
+
+# 데이터베이스 파일
+*.db
+*.sqlite3
+backend/alerts.db
+
+# OS 임시 파일
+.DS_Store
+Thumbs.db
+
+# IDE/에디터 설정 파일
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Python 빌드 및 배포 임시 파일
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 주피터 노트북 임시 파일
+.ipynb_checkpoints/
