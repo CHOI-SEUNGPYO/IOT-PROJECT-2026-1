@@ -1,0 +1,233 @@
+/* ==========================================
+   1. 테마 변수 (라이트/다크 모드)
+   ========================================== */
+:root {
+    --bg-color: #f4f7f6;
+    --text-color: #333;
+    --card-bg: white;
+    --header-bg: #2c3e50;
+    --border-color: #eee;
+    --hover-bg: #f9f9f9;
+}
+
+[data-theme="dark"] {
+    --bg-color: #121212;
+    --text-color: #e0e0e0;
+    --card-bg: #1e1e1e;
+    --header-bg: #000000;
+    --border-color: #333;
+    --hover-bg: #2a2a2a;
+}
+
+body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.container {
+    padding: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* ==========================================
+   2. 헤더 & 내비게이션
+   ========================================== */
+header {
+    background-color: var(--header-bg);
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+header nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 1rem;
+    font-weight: bold;
+}
+
+header nav a:hover {
+    text-decoration: underline;
+}
+
+.theme-btn {
+    cursor: pointer;
+    background: #f39c12;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    margin-left: 15px;
+    transition: background 0.2s;
+}
+
+.theme-btn:hover {
+    background: #e67e22;
+}
+
+/* ==========================================
+   3. 카드 UI (상태 박스 & 차트 영역)
+   ========================================== */
+.card {
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+#statusBox {
+    transition: background-color 0.3s ease;
+}
+
+#statusBox h1 {
+    margin: 0 0 10px 0;
+    font-size: 2.5rem;
+}
+
+#statusBox p {
+    margin: 0;
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.status-normal {
+    background-color: #27ae60;
+    color: white;
+    text-align: center;
+}
+
+.status-danger {
+    background-color: #e74c3c;
+    color: white;
+    text-align: center;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 15px rgba(231, 76, 60, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+    }
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* ==========================================
+   4. 반응형 웹 (모바일 최적화)
+   ========================================== */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+        padding: 1.5rem 1rem;
+    }
+
+    header nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    header nav a {
+        margin: 0;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    .card {
+        padding: 1.5rem;
+    }
+
+    #statusBox h1 {
+        font-size: 2rem;
+    }
+
+    #statusBox p {
+        font-size: 1rem;
+    }
+
+    .chart-container {
+        height: 220px;
+    }
+}
+
+/* ==========================================
+   5. 팝업 (토스트 알림) UI
+   ========================================== */
+.toast-popup {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #c0392b;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    font-size: 1.2rem;
+    font-weight: bold;
+    z-index: 9999;
+
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.toast-popup.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ==========================================
+   6. 액션 버튼 (Fine 버튼)
+   ========================================== */
+.fine-btn {
+    margin-top: 20px;
+    padding: 10px 24px;
+    background-color: white;
+    color: #e74c3c;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.1s, background-color 0.2s;
+}
+
+.fine-btn:hover {
+    background-color: #f1f1f1;
+}
+
+.fine-btn:active {
+    transform: scale(0.95);
+}

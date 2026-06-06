@@ -21,10 +21,10 @@ except ImportError:
         tflite = tf.lite
 
 class YamnetAudioDetector:
-    def __init__(self, model_path=None, lstm_model_path=None, csv_path=None):
+    def __init__(self, model_path=None, classifier_model_path=None, csv_path=None):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         model_path = model_path or os.path.join(current_dir, "yamnet.tflite")
-        lstm_model_path = lstm_model_path or os.path.join(current_dir, "fall_lstm_model.tflite")
+        classifier_model_path = classifier_model_path or os.path.join(current_dir, "fall_classifier.tflite")
         csv_path = csv_path or os.path.join(current_dir, "yamnet_class_map.csv")
 
         # YAMNet 모델 로드
@@ -52,15 +52,15 @@ class YamnetAudioDetector:
         if self.embedding_tensor_index is None:
             raise ValueError("YAMNet 모델 내부에서 1024차원 임베딩 텐서(shape: [1,1,1,1024])를 찾을 수 없습니다.")
         
-        # LSTM 모델 로드
-        self.lstm_interpreter = tflite.Interpreter(model_path=lstm_model_path, num_threads=1)
-        self.lstm_interpreter.allocate_tensors()
-        self.lstm_input_details = self.lstm_interpreter.get_input_details()
-        self.lstm_output_details = self.lstm_interpreter.get_output_details()
+        # 분류기 모델 로드
+        self.classifier_interpreter = tflite.Interpreter(model_path=classifier_model_path, num_threads=1)
+        self.classifier_interpreter.allocate_tensors()
+        self.classifier_input_details = self.classifier_interpreter.get_input_details()
+        self.classifier_output_details = self.classifier_interpreter.get_output_details()
         
-        # 슬라이딩 윈도우 FIFO 임베딩 큐 설정 (크기 6)
-        self.embedding_queue = deque(maxlen=6)
-        self.lstm_threshold = 0.5
+        # 디바운싱 및 설정 정보
+        self.consecutive_triggers = 0
+        self.THRESHOLD = 0.6
         self.TARGET_API_URL = "http://127.0.0.1:8000/api/alert"
         
         # 모니터링 로그 출력용 YAMNet 클래스 맵 로드
@@ -147,36 +147,35 @@ class YamnetAudioDetector:
                 class_name = self.class_names[top_idx]
                 yamnet_confidence = float(mean_scores[top_idx])
                 
-                # waveform_binary 입력 구조상 매 루프마다 1개 프레임이 수집되므로 큐에 1개 추가
-                self.embedding_queue.append(float_emb)
+                # 7. 커스텀 분류기로 낙상 예측 수행 (1프레임 단위 실시간 예측)
+                classifier_input = np.expand_dims(float_emb, axis=0).astype(np.float32) # [1, 1024]
+                self.classifier_interpreter.set_tensor(self.classifier_input_details[0]['index'], classifier_input)
+                self.classifier_interpreter.invoke()
+                classifier_output = self.classifier_interpreter.get_tensor(self.classifier_output_details[0]['index'])
                 
-                # 7. 큐에 임베딩이 6개 이상 차면 LSTM 최종 분류 수행
-                if len(self.embedding_queue) == 6:
-                    lstm_input = np.array(self.embedding_queue, dtype=np.float32)
-                    lstm_input = np.expand_dims(lstm_input, axis=0) # [1, 6, 1024]
-                    
-                    self.lstm_interpreter.set_tensor(self.lstm_input_details[0]['index'], lstm_input)
-                    self.lstm_interpreter.invoke()
-                    lstm_output = self.lstm_interpreter.get_tensor(self.lstm_output_details[0]['index'])
-                    
-                    confidence = float(lstm_output[0][0])
-                    
-                    if confidence >= self.lstm_threshold:
-                        print(f"🚨 [위험 감지] 최종 위험 상황 포착! 낙상 확률: {confidence * 100:.1f}% (소리 경향: {class_name})")
-                        alert_payload = {
-                            "timestamp": datetime.now().isoformat(),
-                            "sound_type": "Fall", # 낙상/위험 감지
-                            "confidence": confidence
-                        }
-                        try:
-                            response = requests.post(self.TARGET_API_URL, json=alert_payload)
-                            print(f"📡 [백엔드 전송 성공] 서버 응답: {response.status_code}")
-                        except Exception as e:
-                            print(f"❌ [백엔드 전송 실패] 서버가 꺼져있거나 주소가 잘못됨")
-                    else:
-                        print(f". (현재 안전함 - 낙상 확률: {confidence * 100:.1f}%, 소리: {class_name} {yamnet_confidence * 100:.1f}%)")
+                confidence = float(classifier_output[0][0])
+                
+                # 8. 디바운싱 로직 (연속 2회 임계값 이상인 경우 최종 낙상 판정)
+                if confidence >= self.THRESHOLD:
+                    self.consecutive_triggers += 1
                 else:
-                    print(f"⏳ [대기 중] 임베딩 수집 중... ({len(self.embedding_queue)}/6) - 현재 소리: {class_name}")
+                    self.consecutive_triggers = 0
+                    
+                if self.consecutive_triggers >= 2:
+                    print(f"🚨 [위험 감지] 최종 위험 상황 포착! 낙상 확률: {confidence * 100:.1f}% (소리 경향: {class_name})")
+                    alert_payload = {
+                        "timestamp": datetime.now().isoformat(),
+                        "sound_type": "Fall", # 낙상/위험 감지
+                        "confidence": confidence
+                    }
+                    try:
+                        response = requests.post(self.TARGET_API_URL, json=alert_payload)
+                        print(f"📡 [백엔드 전송 성공] 서버 응답: {response.status_code}")
+                    except Exception as e:
+                        print(f"❌ [백엔드 전송 실패] 서버가 꺼져있거나 주소가 잘못됨")
+                else:
+                    status_str = f"주의 (누적 1회)" if self.consecutive_triggers == 1 else "안전함"
+                    print(f". (현재 {status_str} - 낙상 확률: {confidence * 100:.1f}%, 소리: {class_name} {yamnet_confidence * 100:.1f}%)")
 
         except KeyboardInterrupt:
             print("\n👋 시스템을 안전하게 종료합니다.")

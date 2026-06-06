@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>통계 - YAMNet</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <header>
+        <h2>🔊 YAMNet Monitor (통계)</h2>
+        <nav>
+            <a href="/">홈</a>
+            <a href="/stats">통계</a>
+            <a href="/settings">설정</a>
+            <button class="theme-btn" onclick="toggleTheme()">🌙 모드 변경</button>
+        </nav>
+    </header>
+
+    <div id="dangerPopup" class="toast-popup"></div>
+
+    <div class="container">
+
+        {% include 'status_box.html' %}
+
+        <div class="card">
+            <h3>📊 주간 위험 감지 통계</h3>
+            <p>이번 주 총 위험 감지 횟수: <strong>142회</strong></p>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+            <h3>가장 많이 감지된 위험 소리 TOP 3</h3>
+            <ol>
+                <li>Glass breaking (유리 깨짐) - 45%</li>
+                <li>Siren (사이렌) - 30%</li>
+                <li>Scream (비명) - 15%</li>
+            </ol>
+        </div>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

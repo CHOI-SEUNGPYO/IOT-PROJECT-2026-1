@@ -54,3 +54,6 @@ share/python-wheels/
 
 # 주피터 노트북 임시 파일
 .ipynb_checkpoints/
+
+# test 데이터
+test_dataset
